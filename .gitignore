@@ -2,5 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-.Rproj
-.xlsx
+*.Rproj
+*.xlsx
+*.xlsm
