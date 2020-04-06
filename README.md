@@ -4,5 +4,5 @@ SimpleBox is a multimedia mass balance model of the so-called ‘Mackay type’.
 This repository if for files, e.g. in R to handle different functions of the model. First is an R script to better use the dynamic function of SimpleBox instead having to rely on RExcell.
 
 # Availability
-SimpleBox is available from rivm.nl/SimpleBox or rivm.nl/SimpleBox4nano
-Scroll down and fill in your info on the download page for immediate download.
+SimpleBox is available from [rivm.nl/SimpleBox](https://www.rivm.nl/en/soil-and-water/simplebox) or [rivm.nl/SimpleBox4nano](https://www.rivm.nl/en/soil-and-water/simplebox4nano)
+Scroll down for downlaod, the files are imedeately available after filling in the download form.
