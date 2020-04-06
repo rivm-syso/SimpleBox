@@ -62,15 +62,11 @@ SimpleBoxODE <- function(t, m, parms) {
 This function can be used in different ways, here we give an example to calculate the concentrations in time based on 3 chronological emission scenarios: 
 
 ```{r define emission scenario}
-tend1 <- 60*60*24*365*10 # set this in seconds
-SB.e1 <- SB.e            # Emission as read from xlsx model file in sb4n.loc
-tlength1 <- tend1/(60*60*24*(365/12))+1 # number of output points (approx. 1 per month)
-tend2 <- 60*60*24*365*15 # set this (seconds)
-SB.e2 <- SB.e/2          # 50% emission (can also be set to 0, use rep(0,length(SB.e)))
-tlength2 <- (tend2-tend1)/(60*60*24*(365/12))+1 # number of output points (approx. 1 per month)
-tend3 <- 60*60*24*365*20 # set this (seconds)
-SB.e3 <- rep(0,length(SB.e)) # emission stops
-tlength3 <- (tend3-tend2)/(60*60*24*(365/12))+1 # number of output points (approx. 1 per month)
+Period1 <- 20 # in years
+Period2 <- 10 # in years
+EmisReduc1 <- 50 # percentage emission reduction relative to period 1
+Period3 <- 10 # in years
+EmisReduc2 <- 100 # percentage emission reduction relative to period 1
 ```
 
 An helperfunction is applied to calculate the 3 seperate periods. These are then added together to get the raw output which is a matrix of masses in each compartment per time point.
@@ -97,6 +93,16 @@ Rdyn.base <- function(Parms,    # list of parms needed for SimpleBoxODE fucntion
   out
 }
 
+
+tend1 <- 60*60*24*365*Period1 # set this in seconds
+SB.e1 <- SB.e            # Emission as read from xlsx model file in sb4n.loc
+tlength1 <- tend1/(60*60*24*(365/12))+1 # number of output points (approx. 1 per month)
+tend2 <- 60*60*24*365*(Period1+Period2) # set this (seconds)
+SB.e2 <- SB.e*(1-EmisReduc1/100)        # 50% emission (can also be set to 0, use rep(0,length(SB.e)))
+tlength2 <- (tend2-tend1)/(60*60*24*(365/12))+1 # number of output points (approx. 1 per month)
+tend3 <- 60*60*24*365*(Period1+Period2+Period3) # set this (seconds)
+SB.e3 <- SB.e*(1-EmisReduc2/100) # emission stops
+tlength3 <- (tend3-tend2)/(60*60*24*(365/12))+1 # number of output points (approx. 1 per month)
 
 # calculate mass in each compartment for 3 time spans with different emission regimes make the timeline  
 # period 1: 100% emission as input in sb4n.xlsx 
@@ -246,16 +252,16 @@ substance <- as.character(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0
 data1 <- melt(as.data.frame(out3[-1,]), id.vars="Time_y")
 colnames(data1)[2] <- "Compartment"
 dataR <- data1[grep("R",data1$Compartment),]
-dataRS <- dataR
-dataRS <- dataR[grep("P",dataR$Compartment),]
+dataRS <- dataR[grep("A",dataR$Compartment),]
 library(scales)
 p <- ggplot(dataRS, aes(Time_y,value, col=Compartment)) +
   geom_line(size=1.2)
 p1 <- p + theme(legend.position = "right") # plot without legend because it is too large.
 p1 + scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                   labels = trans_format("log10", math_format(10^.x))) +
+                   labels = trans_format("log10", math_format(10^.x)),
+                   limits=c(1e-20,max(dataRS$value))) +
   xlab("Time (years)") +
-  ylab(paste0("Concentration ",substance))
+  ylab(paste0("Concentration ",substance)) 
 
 
 ```
