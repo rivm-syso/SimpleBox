@@ -29,14 +29,14 @@ Define the location of the simplebox xlsx file.
 If used in an R project, the default location is the *data* folder.
 
 ```{r read in data, echo=TRUE}
-sb4n.loc <- "data/20190930 SimpleBox4nano.xlsm"
+sb4n.loc <- "data/SimpleBox4.0_web_PBT1.xlsm"
 
 ## NOTE ##
 ## Sometimes the naming of the cells in excel is different based on the version you are using.
-## i.e. check that matrix "K" is the correct name, see worksheet "engine".
+## i.e. check that matrix "K" is the correct name, see worksheet "engine". It could be "Kmatrix"
 
-SB.K <- as.matrix(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="K")) # matrix of rate constants "k"
-SB.m0 <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="Dyn_m0") # Initial mass of each compartment
+SB.K <- as.matrix(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="Kmatrix")) # matrix of rate constants "k"
+SB.m0 <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="m0") # Initial mass of each compartment, could be "m0"
 SB.names <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="box_names") #Names for each compartment
 SB.v <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="v") #Volumes
 SB.e <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="emis") # Emission rates for each
@@ -140,7 +140,7 @@ out1 <- rbind(out.t1,out.t2,out.t3)
 
 ## convert output mass to material stock per compartment
 
-```{r conver mass to stock}
+```{r conver mass to stock SimpleBox4nano version}
 # the for loops slow this piece of script down, optimizations welcome...
 
 # Function to calculate wet weight concentration in soil from raw concentration in kg/m3
@@ -174,36 +174,125 @@ if (as.character(read.xlsx(sb4n.loc,sheet = "version",colNames = FALSE,rows=2,co
   }
   V.temp <- V.temp[,-grep(c("cw"),colnames(V.temp))]
   SB.v <- V.temp
+  
+  
+  out2 <- cbind(Time = out1[,"Time"],
+                t(apply(out1[,2:(length(SB.v)+1)],1,function(x) x*Molweight/as.numeric(SB.v)))) # from mol to kg / m3
+  RHOsolid = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("RHOsolid")))
+  out3 <- out2
+  
+  
+  
+  # convert soil to kg / kg (ww)
+  for (soil in colnames(out2)[grep(c("s1|s2|s3|sT|sM|sA"),colnames(out2))]){
+    Conc.soil = out2[,soil]
+    soilparname <- substr (soil, 1, nchar(soil)-1)
+    Fracw = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("Fracw.",soilparname)))
+    Fraca = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("Fraca.",soilparname)))
+    out3[,soil] = f_Soil.wetweight(Conc.soil=Conc.soil,Fracw=Fracw,Fraca=Fraca,RHOsolid=RHOsolid)
+  }
+  colnames(out3)[grep(c("s1|s2|s3|sT|sM|sA"),colnames(out3))] <- 
+    paste0(colnames(out3)[grep(c("s1|s2|s3|sT|sM|sA"),colnames(out3))],"_kg.kg(w)-1")
+  
+  # convert sediment to kg / kg (ww)
+  for (sed in colnames(out2)[grep(c("sd0|sd1|sd2|sdT|sdM|sdA"),colnames(out2))]){
+    Conc.soil = out2[,sed]
+    Fracw = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
+                                 namedRegion =paste0("Fracw.",substr(sed,1,2),substr(sed,nchar(sed)-1,nchar(sed)-1))))
+    Fraca = 0
+    out3[,sed] = f_Soil.wetweight(Conc.soil=Conc.soil,Fracw=Fracw,Fraca=Fraca,RHOsolid=RHOsolid)
+  }
+  colnames(out3)[grep(c("sd0|sd1|sd2|sdT|sdM|sdA"),colnames(out3))] <- 
+    paste0(colnames(out3)[grep(c("sd0|sd1|sd2|sdT|sdM|sdA"),colnames(out3))],"_kg.kg(w)-1")
+  
+  # convert air to kg/kg
+  RHOaers = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("RHOaers")))
+  Rho.dryair = 1.179327 # average for 1000 m collumn in kg/m3
+  for (air in colnames(out2)[grep(c("a"),colnames(out2))]){
+    
+    FRACaers.a = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
+                                      namedRegion =paste0("FRACaers.a",substr(air,nchar(air)-1,nchar(air)-1) )))
+    FRACaerw.a = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
+                                      namedRegion =paste0("FRACaerw.a",substr(air,nchar(air)-1,nchar(air)-1) )))
+    Rho.air = Rho.dryair*(1-FRACaers.a-FRACaerw.a)+RHOaers*FRACaers.a+1000*FRACaerw.a
+    
+    out3[,air] = out2[,air]/Rho.air # from kg/m3 to kg / kg matrix
+  }
+  colnames(out3)[grep(c("a"),colnames(out3))] <- 
+    paste0(colnames(out3)[grep(c("a"),colnames(out3))],"_kg.kg-1")
+  # convert all water concentrations
+  Rho.w = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
+                               namedRegion =paste0("Rho.w")))
+  for (w in colnames(out2)[grep(c("w0|w1|w2|w3"),colnames(out2))]){
+    out3[,w] = out2[,w]/Rho.w # from kg/m3 to kg / kg matrix
+  }
+  colnames(out3)[grep(c("w0|w1|w2|w3"),colnames(out3))] <- 
+    paste0(colnames(out3)[grep(c("w0|w1|w2|w3"),colnames(out3))],"_kg.kg-1")
+  
+  
+  
+  out3[,"Time"] <- c(out3[,"Time"]) / (60*60*24*365) # convert Time from seconds to years
+  colnames(out3)[grep("Time",colnames(out3))] <- paste0(colnames(out3)[grep("Time",colnames(out3))],
+                                                        "_y")
+  
 }
+
 # end routine for simplebox4nano
 ###########
+
+# write out3 to a csv file
+# write.csv2(out3,paste0("out3.csv"))
+
+```
+
+```{r conver mass to stock SimpleBox (conventional) version}
+# the for loops slow this piece of script down, optimizations welcome...
+
+# Function to calculate wet weight concentration in soil from raw concentration in kg/m3
+f_Soil.wetweight <- function(Conc.soil, # in kg/m3 soil or sediment
+                             Fracw,
+                             Fraca,
+                             RHOsolid){
+  Conc.soil/(Fracw*1000+(1-Fracw-Fraca)*RHOsolid) # in kg/kg (wet) soil
+}
+
+Molweight= as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("Molweight")))
+
+############
+# SimpleBox version
+if (as.character(read.xlsx(sb4n.loc,sheet = "version",colNames = FALSE,rows=2,cols=2)) == "SimpleBox"){
+
+
 
 out2 <- cbind(Time = out1[,"Time"],
               t(apply(out1[,2:(length(SB.v)+1)],1,function(x) x*Molweight/as.numeric(SB.v)))) # from mol to kg / m3
 RHOsolid = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("RHOsolid")))
 out3 <- out2
 
+
+
 # convert soil to kg / kg (ww)
 for (soil in colnames(out2)[grep(c("s1|s2|s3|sT|sM|sA"),colnames(out2))]){
   Conc.soil = out2[,soil]
-  soilparname <- substr (soil, 1, nchar(soil)-1)
-  Fracw = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("Fracw.",soilparname)))
-  Fraca = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("Fraca.",soilparname)))
+  Fracw = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("Fracw.",soil)))
+  Fraca = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("Fraca.",soil)))
   out3[,soil] = f_Soil.wetweight(Conc.soil=Conc.soil,Fracw=Fracw,Fraca=Fraca,RHOsolid=RHOsolid)
 }
 colnames(out3)[grep(c("s1|s2|s3|sT|sM|sA"),colnames(out3))] <- 
   paste0(colnames(out3)[grep(c("s1|s2|s3|sT|sM|sA"),colnames(out3))],"_kg.kg(w)-1")
 
 # convert sediment to kg / kg (ww)
-for (sed in colnames(out2)[grep(c("sd0|sd1|sd2|sdT|sdM|sdA"),colnames(out2))]){
+for (sed in colnames(out2)[grep(c("sd1|sd2|sdT|sdM|sdA"),colnames(out2))]){
   Conc.soil = out2[,sed]
   Fracw = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
-                               namedRegion =paste0("Fracw.",substr(sed,1,2),substr(sed,nchar(sed)-1,nchar(sed)-1))))
+                               namedRegion =paste0("Fracw.",
+                                                   substr(sed,1,2),
+                                                   substr(sed,nchar(sed),nchar(sed)) ) ))
   Fraca = 0
   out3[,sed] = f_Soil.wetweight(Conc.soil=Conc.soil,Fracw=Fracw,Fraca=Fraca,RHOsolid=RHOsolid)
 }
-colnames(out3)[grep(c("sd0|sd1|sd2|sdT|sdM|sdA"),colnames(out3))] <- 
-  paste0(colnames(out3)[grep(c("sd0|sd1|sd2|sdT|sdM|sdA"),colnames(out3))],"_kg.kg(w)-1")
+colnames(out3)[grep(c("sd1|sd2|sdT|sdM|sdA"),colnames(out3))] <- 
+  paste0(colnames(out3)[grep(c("sd1|sd2|sdT|sdM|sdA"),colnames(out3))],"_kg.kg(w)-1")
 
 # convert air to kg/kg
 RHOaers = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("RHOaers")))
@@ -211,9 +300,9 @@ Rho.dryair = 1.179327 # average for 1000 m collumn in kg/m3
 for (air in colnames(out2)[grep(c("a"),colnames(out2))]){
   
   FRACaers.a = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
-                                    namedRegion =paste0("FRACaers.a",substr(air,nchar(air)-1,nchar(air)-1) )))
+                                    namedRegion =paste0("FRACaers.a",substr(air,nchar(air),nchar(air)) )))
   FRACaerw.a = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
-                                    namedRegion =paste0("FRACaerw.a",substr(air,nchar(air)-1,nchar(air)-1) )))
+                                    namedRegion =paste0("FRACaerw.a",substr(air,nchar(air),nchar(air)) )))
   Rho.air = Rho.dryair*(1-FRACaers.a-FRACaerw.a)+RHOaers*FRACaers.a+1000*FRACaerw.a
   
   out3[,air] = out2[,air]/Rho.air # from kg/m3 to kg / kg matrix
@@ -221,8 +310,8 @@ for (air in colnames(out2)[grep(c("a"),colnames(out2))]){
 colnames(out3)[grep(c("a"),colnames(out3))] <- 
   paste0(colnames(out3)[grep(c("a"),colnames(out3))],"_kg.kg-1")
 # convert all water concentrations
-Rho.w = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
-                             namedRegion =paste0("Rho.w")))
+Rho.w = 1000
+
 for (w in colnames(out2)[grep(c("w0|w1|w2|w3"),colnames(out2))]){
   out3[,w] = out2[,w]/Rho.w # from kg/m3 to kg / kg matrix
 }
@@ -234,10 +323,16 @@ colnames(out3)[grep(c("w0|w1|w2|w3"),colnames(out3))] <-
 out3[,"Time"] <- c(out3[,"Time"]) / (60*60*24*365) # convert Time from seconds to years
 colnames(out3)[grep("Time",colnames(out3))] <- paste0(colnames(out3)[grep("Time",colnames(out3))],
                                                       "_y")
+
+}
+# end routine SimpleBox version
+###########
+
 # write out3 to a csv file
 # write.csv2(out3,paste0("out3.csv"))
 
 ```
+
 
 ## To Do:
 - Add up Solid (S), small (A) and large (P) particulte species for SimpleBox4nano
@@ -252,6 +347,7 @@ substance <- as.character(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0
 data1 <- melt(as.data.frame(out3[-1,]), id.vars="Time_y")
 colnames(data1)[2] <- "Compartment"
 dataR <- data1[grep("R",data1$Compartment),]
+if (as.character(read.xlsx(sb4n.loc,sheet = "version",colNames = FALSE,rows=2,cols=2)) == "SimpleBox4nano"){
 dataRS <- dataR[grep("A",dataR$Compartment),]
 library(scales)
 p <- ggplot(dataRS, aes(Time_y,value, col=Compartment)) +
@@ -262,6 +358,20 @@ p1 + scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                    limits=c(1e-20,max(dataRS$value))) +
   xlab("Time (years)") +
   ylab(paste0("Concentration ",substance)) 
+}
+
+if (as.character(read.xlsx(sb4n.loc,sheet = "version",colNames = FALSE,rows=2,cols=2)) == "SimpleBox"){
+library(scales)
+p <- ggplot(dataR, aes(Time_y,value, col=Compartment)) +
+  geom_line(size=1.2)
+p1 <- p + theme(legend.position = "right") # plot without legend because it is too large.
+p1 + scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                   labels = trans_format("log10", math_format(10^.x)),
+                   limits=c(1e-20,max(dataRS$value))) +
+  xlab("Time (years)") +
+  ylab(paste0("Concentration ",substance)) 
+}
+
 
 
 ```
