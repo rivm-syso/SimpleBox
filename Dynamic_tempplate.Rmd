@@ -1,0 +1,261 @@
+---
+title: "Rshell for dynamic simplebox"
+author: "Joris Quik"
+date: "2/14/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(openxlsx)
+library(deSolve)
+library(ggplot2)
+library(reshape2)
+```
+
+## Introduction
+
+This document describes the code and functions to produce quasi-dynamic ('levelIV') solutions of the [SimpleBox](https://www.rivm.nl/simplebox) multimedia fate model.
+
+Prerequisites to run this code is a recent version of SimpleBox (Feb. 2020 or later). 
+The only relevant change in SimpleBox with the previous version (31-05-2015) is the naming of a vector of compartment names as *box_names*.
+
+This script should work for both SimpleBox (conventional) and SimpleBox4nano.
+
+## preparing data
+Define the location of the simplebox xlsx file.
+If used in an R project, the default location is the *data* folder.
+
+```{r read in data, echo=TRUE}
+sb4n.loc <- "data/20190930 SimpleBox4nano.xlsm"
+
+## NOTE ##
+## Sometimes the naming of the cells in excel is different based on the version you are using.
+## i.e. check that matrix "K" is the correct name, see worksheet "engine".
+
+SB.K <- as.matrix(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="K")) # matrix of rate constants "k"
+SB.m0 <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="Dyn_m0") # Initial mass of each compartment
+SB.names <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="box_names") #Names for each compartment
+SB.v <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="v") #Volumes
+SB.e <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="emis") # Emission rates for each
+ChemClass <- as.character(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="ChemClass")) # Emission rates for each
+colnames(SB.v) <- SB.names
+colnames(SB.e) <- SB.names
+
+```
+
+The K matrix, starting masses at t=0, emissions vector, the compartment names and compartment volumes are read from the SimpleBox xls file: `r sb4n.loc`.
+
+## Calculation 
+The inverse of the matrix of rate constants (K) multiplied with the mass in each compartment (m) plus the emission (e) gives the change in mass of each time step per compartment.
+
+```{r SimpleBoxODE}
+# ODE function of SimpleBox:
+SimpleBoxODE <- function(t, m, parms) {
+  dm <- with(parms, K %*% m + e)
+  return(list(dm))
+}
+```
+
+This function can be used in different ways, here we give an example to calculate the concentrations in time based on 3 chronological emission scenarios: 
+
+```{r define emission scenario}
+tend1 <- 60*60*24*365*10 # set this in seconds
+SB.e1 <- SB.e            # Emission as read from xlsx model file in sb4n.loc
+tlength1 <- tend1/(60*60*24*(365/12))+1 # number of output points (approx. 1 per month)
+tend2 <- 60*60*24*365*15 # set this (seconds)
+SB.e2 <- SB.e/2          # 50% emission (can also be set to 0, use rep(0,length(SB.e)))
+tlength2 <- (tend2-tend1)/(60*60*24*(365/12))+1 # number of output points (approx. 1 per month)
+tend3 <- 60*60*24*365*20 # set this (seconds)
+SB.e3 <- rep(0,length(SB.e)) # emission stops
+tlength3 <- (tend3-tend2)/(60*60*24*(365/12))+1 # number of output points (approx. 1 per month)
+```
+
+An helperfunction is applied to calculate the 3 seperate periods. These are then added together to get the raw output which is a matrix of masses in each compartment per time point.
+
+```{r calculate raw output}
+
+# helper function to calculate dynamic output for set time span
+Rdyn.base <- function(Parms,    # list of parms needed for SimpleBoxODE fucntion
+                      tstart,   # First time point (in seconds)
+                      tend,     # Last time point (in seconds)
+                      SB.m0,    # Vector of initial masses
+                      SB.names, # Vector of compartment names
+                      tlength){ # Number of concentrations to output between start and end
+  
+  tset <- seq(from=tstart, to=tend, length.out=tlength) # make time sequence for which output is wanted
+  Rpar.SBdyn <- list(tset=tset, m=as.numeric(SB.m0), parms=Parms)
+  
+  # Run ODE function to create out1 with masses in each compartment at different time points
+  out <- with(Rpar.SBdyn, {
+    ode(y=m,times=tset,func=SimpleBoxODE,parms=parms)
+  })
+  colnames(out)<-c("Time",SB.names)
+  
+  out
+}
+
+
+# calculate mass in each compartment for 3 time spans with different emission regimes make the timeline  
+# period 1: 100% emission as input in sb4n.xlsx 
+
+Parms1 <- list(e=SB.e1, K=as.matrix(SB.K))
+out.t1 <- Rdyn.base(Parms = Parms1,
+                    tstart = 0, 
+                    tend = tend1,
+                    SB.m0=SB.m0,
+                    SB.names,
+                    tlength = tlength1)
+
+# period 2: 50% emission
+Parms2 <- list(e=SB.e2, K=as.matrix(SB.K))
+out.t2 <-  Rdyn.base(Parms = Parms2,
+                     tstart = tend1,
+                     tend = tend2,
+                     SB.m0=out.t1[tlength1,-1],
+                     SB.names,
+                     tlength = tlength2)
+
+# period 3: emission stops
+Parms3 <- list(e=SB.e3, K=as.matrix(SB.K))
+out.t3 <- Rdyn.base(Parms = Parms3,
+                    tstart = tend2,
+                    tend = tend3,
+                    SB.m0=out.t2[tlength2,-1],
+                    SB.names,
+                    tlength = tlength3)
+
+
+out1 <- rbind(out.t1,out.t2,out.t3)
+
+```
+
+## convert output mass to material stock per compartment
+
+```{r conver mass to stock}
+# the for loops slow this piece of script down, optimizations welcome...
+
+# Function to calculate wet weight concentration in soil from raw concentration in kg/m3
+f_Soil.wetweight <- function(Conc.soil, # in kg/m3 soil or sediment
+                             Fracw,
+                             Fraca,
+                             RHOsolid){
+  Conc.soil/(Fracw*1000+(1-Fracw-Fraca)*RHOsolid) # in kg/kg (wet) soil
+}
+
+Molweight= as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("Molweight")))
+
+############
+# For nano version of simplebox add compartments cw and a together for air
+if (as.character(read.xlsx(sb4n.loc,sheet = "version",colNames = FALSE,rows=2,cols=2)) == "SimpleBox4nano"){
+  out.temp <- out1
+  V.temp <- SB.v
+  
+  for (air in unique(colnames(out.temp)[grep(c("a"),colnames(out.temp))])){
+    if(grepl("G",air)==FALSE){
+      out.temp[,grep(air,colnames(out.temp))] <- out.temp[,grep(air,colnames(out.temp))]+ as.numeric(out.temp[,grep(paste0("cw",substr(air,2,3)),colnames(out.temp))])
+    }
+  }
+  
+  out.temp <- out.temp[,-grep(c("cw"),colnames(out.temp))]
+  out1 <- out.temp
+  for (air in unique(colnames(V.temp)[grep(c("a"),colnames(V.temp))])){
+    if(grepl("G",air)==FALSE){
+      V.temp[,grep(air,colnames(V.temp))] <- V.temp[,grep(air,colnames(V.temp))]+ as.numeric(V.temp[,grep(paste0("cw",substr(air,2,3)),colnames(V.temp))])
+    }
+  }
+  V.temp <- V.temp[,-grep(c("cw"),colnames(V.temp))]
+  SB.v <- V.temp
+}
+# end routine for simplebox4nano
+###########
+
+out2 <- cbind(Time = out1[,"Time"],
+              t(apply(out1[,2:(length(SB.v)+1)],1,function(x) x*Molweight/as.numeric(SB.v)))) # from mol to kg / m3
+RHOsolid = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("RHOsolid")))
+out3 <- out2
+
+# convert soil to kg / kg (ww)
+for (soil in colnames(out2)[grep(c("s1|s2|s3|sT|sM|sA"),colnames(out2))]){
+  Conc.soil = out2[,soil]
+  soilparname <- substr (soil, 1, nchar(soil)-1)
+  Fracw = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("Fracw.",soilparname)))
+  Fraca = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("Fraca.",soilparname)))
+  out3[,soil] = f_Soil.wetweight(Conc.soil=Conc.soil,Fracw=Fracw,Fraca=Fraca,RHOsolid=RHOsolid)
+}
+colnames(out3)[grep(c("s1|s2|s3|sT|sM|sA"),colnames(out3))] <- 
+  paste0(colnames(out3)[grep(c("s1|s2|s3|sT|sM|sA"),colnames(out3))],"_kg.kg(w)-1")
+
+# convert sediment to kg / kg (ww)
+for (sed in colnames(out2)[grep(c("sd0|sd1|sd2|sdT|sdM|sdA"),colnames(out2))]){
+  Conc.soil = out2[,sed]
+  Fracw = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
+                               namedRegion =paste0("Fracw.",substr(sed,1,2),substr(sed,nchar(sed)-1,nchar(sed)-1))))
+  Fraca = 0
+  out3[,sed] = f_Soil.wetweight(Conc.soil=Conc.soil,Fracw=Fracw,Fraca=Fraca,RHOsolid=RHOsolid)
+}
+colnames(out3)[grep(c("sd0|sd1|sd2|sdT|sdM|sdA"),colnames(out3))] <- 
+  paste0(colnames(out3)[grep(c("sd0|sd1|sd2|sdT|sdM|sdA"),colnames(out3))],"_kg.kg(w)-1")
+
+# convert air to kg/kg
+RHOaers = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("RHOaers")))
+Rho.dryair = 1.179327 # average for 1000 m collumn in kg/m3
+for (air in colnames(out2)[grep(c("a"),colnames(out2))]){
+  
+  FRACaers.a = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
+                                    namedRegion =paste0("FRACaers.a",substr(air,nchar(air)-1,nchar(air)-1) )))
+  FRACaerw.a = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
+                                    namedRegion =paste0("FRACaerw.a",substr(air,nchar(air)-1,nchar(air)-1) )))
+  Rho.air = Rho.dryair*(1-FRACaers.a-FRACaerw.a)+RHOaers*FRACaers.a+1000*FRACaerw.a
+  
+  out3[,air] = out2[,air]/Rho.air # from kg/m3 to kg / kg matrix
+}
+colnames(out3)[grep(c("a"),colnames(out3))] <- 
+  paste0(colnames(out3)[grep(c("a"),colnames(out3))],"_kg.kg-1")
+# convert all water concentrations
+Rho.w = as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, 
+                             namedRegion =paste0("Rho.w")))
+for (w in colnames(out2)[grep(c("w0|w1|w2|w3"),colnames(out2))]){
+  out3[,w] = out2[,w]/Rho.w # from kg/m3 to kg / kg matrix
+}
+colnames(out3)[grep(c("w0|w1|w2|w3"),colnames(out3))] <- 
+  paste0(colnames(out3)[grep(c("w0|w1|w2|w3"),colnames(out3))],"_kg.kg-1")
+
+
+
+out3[,"Time"] <- c(out3[,"Time"]) / (60*60*24*365) # convert Time from seconds to years
+colnames(out3)[grep("Time",colnames(out3))] <- paste0(colnames(out3)[grep("Time",colnames(out3))],
+                                                      "_y")
+# write out3 to a csv file
+# write.csv2(out3,paste0("out3.csv"))
+
+```
+
+## To Do:
+- Add up Solid (S), small (A) and large (P) particulte species for SimpleBox4nano
+- make a shiny (web) interface
+
+## graphical overview
+This still needs some WORK
+```{r figure}
+
+substance <- as.character(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion =paste0("ChemName")))
+
+data1 <- melt(as.data.frame(out3[-1,]), id.vars="Time_y")
+colnames(data1)[2] <- "Compartment"
+dataR <- data1[grep("R",data1$Compartment),]
+dataRS <- dataR
+dataRS <- dataR[grep("P",dataR$Compartment),]
+library(scales)
+p <- ggplot(dataRS, aes(Time_y,value, col=Compartment)) +
+  geom_line(size=1.2)
+p1 <- p + theme(legend.position = "right") # plot without legend because it is too large.
+p1 + scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                   labels = trans_format("log10", math_format(10^.x))) +
+  xlab("Time (years)") +
+  ylab(paste0("Concentration ",substance))
+
+
+```
