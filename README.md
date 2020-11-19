@@ -6,3 +6,6 @@ This repository if for files, e.g. in R to handle different functions of the mod
 # Availability
 SimpleBox is available from [rivm.nl/SimpleBox](https://www.rivm.nl/en/soil-and-water/simplebox) or [rivm.nl/SimpleBox4nano](https://www.rivm.nl/en/soil-and-water/simplebox4nano)
 Scroll down for downlaod, the files are imedeately available after filling in the download form.
+
+# Dynamic analysis
+See R notebook: [Dynamic_template.Rmd](Dynamic_tempplate.Rmd).
