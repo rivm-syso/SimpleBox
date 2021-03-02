@@ -1,34 +1,28 @@
----
-title: "Rshell for dynamic simplebox"
-author: "Joris Quik"
-date: "2/14/2020"
-output: github_document
-editor_options: 
-  chunk_output_type: console
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(openxlsx)
-library(deSolve)
-library(ggplot2)
-library(reshape2)
-```
+Rshell for dynamic simplebox
+================
+Joris Quik
+2/14/2020
 
 ## Introduction
 
-This document describes the code and functions to produce quasi-dynamic ('levelIV') solutions of the [SimpleBox](https://www.rivm.nl/simplebox) multimedia fate model.
+This document describes the code and functions to produce quasi-dynamic
+(‘levelIV’) solutions of the [SimpleBox](https://www.rivm.nl/simplebox)
+multimedia fate model.
 
-Prerequisites to run this code is a recent version of SimpleBox (Feb. 2020 or later). 
-The only relevant change in SimpleBox with the previous version (31-05-2015) is the naming of a vector of compartment names as *box_names*.
+Prerequisites to run this code is a recent version of SimpleBox
+(Feb. 2020 or later). The only relevant change in SimpleBox with the
+previous version (31-05-2015) is the naming of a vector of compartment
+names as *box\_names*.
 
-This script should work for both SimpleBox (conventional) and SimpleBox4nano.
+This script should work for both SimpleBox (conventional) and
+SimpleBox4nano.
 
 ## preparing data
-Define the location of the simplebox xlsx file.
-If used in an R project, the default location is the *data* folder.
 
-```{r read in data, echo=TRUE}
+Define the location of the simplebox xlsx file. If used in an R project,
+the default location is the *data* folder.
+
+``` r
 sb4n.loc <- "data/SimpleBox4.0_web_PBT1.xlsm"
 
 ## NOTE ##
@@ -43,15 +37,19 @@ SB.e <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="emis") # Emission rates
 ChemClass <- as.character(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="ChemClass")) # Emission rates for each
 colnames(SB.v) <- SB.names
 colnames(SB.e) <- SB.names
-
 ```
 
-The K matrix, starting masses at t=0, emissions vector, the compartment names and compartment volumes are read from the SimpleBox xls file: `r sb4n.loc`.
+The K matrix, starting masses at t=0, emissions vector, the compartment
+names and compartment volumes are read from the SimpleBox xls file:
+data/SimpleBox4.0\_web\_PBT1.xlsm.
 
-## Calculation 
-The inverse of the matrix of rate constants (K) multiplied with the mass in each compartment (m) plus the emission (e) gives the change in mass of each time step per compartment.
+## Calculation
 
-```{r SimpleBoxODE}
+The inverse of the matrix of rate constants (K) multiplied with the mass
+in each compartment (m) plus the emission (e) gives the change in mass
+of each time step per compartment.
+
+``` r
 # ODE function of SimpleBox:
 SimpleBoxODE <- function(t, m, parms) {
   dm <- with(parms, K %*% m + e)
@@ -59,9 +57,11 @@ SimpleBoxODE <- function(t, m, parms) {
 }
 ```
 
-This function can be used in different ways, here we give an example to calculate the concentrations in time based on 3 chronological emission scenarios: 
+This function can be used in different ways, here we give an example to
+calculate the concentrations in time based on 3 chronological emission
+scenarios:
 
-```{r define emission scenario}
+``` r
 Period1 <- 20 # in years
 Period2 <- 10 # in years
 EmisReduc1 <- 50 # percentage emission reduction relative to period 1
@@ -69,10 +69,11 @@ Period3 <- 10 # in years
 EmisReduc2 <- 100 # percentage emission reduction relative to period 1
 ```
 
-A helperfunction is applied to calculate the 3 seperate periods. These are then added together to get the raw output which is a matrix of masses in each compartment per time point.
+A helperfunction is applied to calculate the 3 seperate periods. These
+are then added together to get the raw output which is a matrix of
+masses in each compartment per time point.
 
-```{r calculate raw output}
-
+``` r
 # helper function to calculate dynamic output for set time span
 Rdyn.base <- function(Parms,    # list of parms needed for SimpleBoxODE fucntion
                       tstart,   # First time point (in seconds)
@@ -135,6 +136,4 @@ out.t3 <- Rdyn.base(Parms = Parms3,
 
 
 out1 <- rbind(out.t1,out.t2,out.t3)
-
 ```
-
