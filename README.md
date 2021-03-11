@@ -8,4 +8,4 @@ SimpleBox is available from [rivm.nl/SimpleBox](https://www.rivm.nl/en/soil-and-
 Scroll down for downlaod, the files are imedeately available after filling in the download form.
 
 # Dynamic analysis
-See R notebook: [Dynamic_SB4_Rnotebook.md](Dynamic_SB4_Rnotebook.Rmd).
+See R notebook: [Dynamic_SB4_Rnotebook.md](Dynamic_SB4_Rnotebook.md).
