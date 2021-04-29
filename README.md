@@ -9,3 +9,4 @@ Scroll down for downlaod, the files are imedeately available after filling in th
 
 # Dynamic analysis
 See R notebook: [Dynamic_SB4_Rnotebook.md](Dynamic_SB4_Rnotebook.md).
+And if you want to use 3 different emission periods in time, see [Dynamic_template.md](Dynamic_tempplate.md)
