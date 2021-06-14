@@ -27,7 +27,7 @@ Define the location of the simplebox xlsx file.
 If used in an R project, the default location is the *data* folder within the project folder.
 
 ```{r read in data, echo=TRUE}
-sb4n.loc <- "data/SimpleBox4.0_web.xlsm"
+sb4n.loc <- "data/SimpleBox4.0_20210402.xlsm"
 
 ## NOTE ##
 ## Sometimes the naming of the cells in excel is different based on the version you are using.
@@ -54,11 +54,43 @@ The K matrix, starting masses at t=0, emissions vector, the compartment names an
 The inverse of the matrix of rate constants (K) multiplied with the mass in each compartment (m) plus the emission (e) gives the change in mass of each time step per compartment. This is the main function:
 
 ```{r SimpleBoxODE}
+
 # ODE function of SimpleBox:
+# Function for time varying emissions
+
+# NOT YET functional.
+
+# This is just a test
+
+emis.data_w1R <- data.frame(year = seq(2000,2049, by = 1),emis_ton = c(rep(100,25),rep(50,25) ))
+
+emission.w1R <- approxfun(emis.data_w1R)
+
+emission(2020.2)
+
+length(SB.e1)
+
 SimpleBoxODE <- function(t, m, parms) {
-  dm <- with(parms, K %*% m + e)
-  return(list(dm))
+  
+  with(as.list(c(parms, m)), {
+    e.w1R <- emission(t)
+    e <- SB.e1
+    
+    dm <- K %*% m + e
+    res <- c(dm)
+    list(res, signal = e)
+    
+  })
 }
+
+
+parms <- list(K=as.matrix(SB.K),SB.e1)
+
+out <- ode(y=SB.m0,times=c(emis.data$year),func=SimpleBoxODE,parms)
+plot(out)
+
+
+
 ```
 
 An helper function is applied to calculate the dynamic output for separate periods. These are then added together to get the raw output which is a matrix of masses in each compartment per time point.
@@ -75,6 +107,8 @@ Rdyn.base <- function(Parms,    # list of parms needed for SimpleBoxODE function
   
   tset <- seq(from=tstart, to=tend, length.out=tlength) # make time sequence for which output is wanted
   Rpar.SBdyn <- list(tset=tset, m=as.numeric(SB.m0), parms=Parms)
+  
+  
   
   # Run ODE function to create out1 with masses in each compartment at different time points
   out <- with(Rpar.SBdyn, {
