@@ -1,10 +1,6 @@
 # SimpleBox xl_version
 
-This is the branch where releases of the SimpleBox xl spreadsheet model will be released.
-
-SimpleBox is a multimedia mass balance model of the so-called 'Mackay type'. It simulates environmental fate of chemicals as fluxes (mass flows) between a series of well-mixed boxes of air, water, sediment and soil on regional, continental and global spatial scales.
-
-This repository if for files, e.g. in R to handle different functions of the model. First is an R script to better use the dynamic function of SimpleBox instead having to rely on RExcell.
+This repository provides the spreadsheet version of SimpleBox.
 
 ## About
 
@@ -30,7 +26,7 @@ Designed originally as a research tool, SimpleBox has proven most useful in dedi
 
 ## Performing quasi-dynamic ('level IV') calculations
 
-SimpleBox uses R-based numeric calculations to produce quasi-dynamic ('levelIV') solutions; R/Rstudio installation necessary. SimpleBox calculates steady-state ('levelIII') output, using Excel only; no R tools are required.
+SimpleBox uses R-based numeric calculations to produce quasi-dynamic ('level IV') solutions; R/Rstudio installation necessary. SimpleBox calculates steady-state ('level III') output, using Excel only; no R tools are required.
 
 Required: [R](https://www.r-project.org/) and packages [deSolve](https://cran.r-project.org/package=deSolve) and [openxlsx](https://cran.r-project.org/package=openxlsx).
 
