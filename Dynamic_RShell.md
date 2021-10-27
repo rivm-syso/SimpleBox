@@ -1,37 +1,40 @@
----
-title: "RShell for Quasi-dynamic (level IV) calculations using SimpleBox"
-author: "Joris Quik"
-date: "3/11/2021"
-output: github_document
-editor_options: 
-  chunk_output_type: console
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
-library(openxlsx)
-library(deSolve)
-```
+RShell for Quasi-dynamic (level IV) calculations using SimpleBox
+================
+Joris Quik
+3/11/2021
 
 ## Introduction
 
-This document describes the code and functions to produce quasi-dynamic ('levelIV') solutions of the [SimpleBox](https://www.rivm.nl/simplebox) multimedia fate model.
+This document describes the code and functions to produce quasi-dynamic
+(‘levelIV’) solutions of the [SimpleBox](https://www.rivm.nl/simplebox)
+multimedia fate model.
 
-Prerequisites to run this code is a recent version of SimpleBox (Feb. 2020 or later). 
+Prerequisites to run this code is a recent version of SimpleBox
+(Feb. 2020 or later).
 
-This script should work for both SimpleBox4.0 (conventional) and SimpleBox4nano.
+This script should work for both SimpleBox4.0 (conventional) and
+SimpleBox4nano.
 
 ## preparing data
-Define the location of the simplebox xlsx file.
-If used in an R project, the default location is the *data* folder within the project folder.
 
-```{r read in data, echo=TRUE}
+Define the location of the simplebox xlsx file. If used in an R project,
+the default location is the *data* folder within the project folder.
 
+``` r
 #For purpose of this example the latest SimpleBox file is downloaded to the data directory:
 download.file(url = "https://github.com/rivm-syso/SimpleBox/archive/refs/heads/xl_version.zip"
                                    , destfile = "data/SimpleBox_xl.zip")
+```
 
+    ## Warning in download.file(url = "https://github.com/rivm-syso/SimpleBox/archive/
+    ## refs/heads/xl_version.zip", : URL https://github.com/rivm-syso/SimpleBox/
+    ## archive/refs/heads/xl_version.zip: cannot open destfile 'data/SimpleBox_xl.zip',
+    ## reason 'Device or resource busy'
+
+    ## Warning in download.file(url = "https://github.com/rivm-syso/SimpleBox/archive/
+    ## refs/heads/xl_version.zip", : download had nonzero exit status
+
+``` r
 # unzip the SimpleBox xl file to the data directory
 unzip(zipfile = "data/SimpleBox_xl.zip",files = "SimpleBox-xl_version/SimpleBox4.0_web.xlsm",
       junkpaths=TRUE, exdir = "data")
@@ -54,15 +57,19 @@ SB.tend2 <- as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="tend.II"
 colnames(SB.v) <- SB.names
 colnames(SB.e1) <- SB.names
 colnames(SB.e2) <- SB.names
-
 ```
 
-The K matrix, starting masses at t=0, emissions vector, the compartment names and compartment volumes are read from the SimpleBox xls file: `r sb4n.loc`.
+The K matrix, starting masses at t=0, emissions vector, the compartment
+names and compartment volumes are read from the SimpleBox xls file:
+data/SimpleBox4.0\_web.xlsm.
 
 ## Functions
-The inverse of the matrix of rate constants (K) multiplied with the mass in each compartment (m) plus the emission (e) gives the change in mass of each time step per compartment. This is the main function:
 
-```{r SimpleBoxODE}
+The inverse of the matrix of rate constants (K) multiplied with the mass
+in each compartment (m) plus the emission (e) gives the change in mass
+of each time step per compartment. This is the main function:
+
+``` r
 # ODE function of SimpleBox:
 SimpleBoxODE <- function(t, m, parms) {
   dm <- with(parms, K %*% m + e)
@@ -70,10 +77,11 @@ SimpleBoxODE <- function(t, m, parms) {
 }
 ```
 
-An helper function is applied to calculate the dynamic output for separate periods. These are then added together to get the raw output which is a matrix of masses in each compartment per time point.
+An helper function is applied to calculate the dynamic output for
+separate periods. These are then added together to get the raw output
+which is a matrix of masses in each compartment per time point.
 
-```{r calculate raw output}
-
+``` r
 # helper function to calculate dynamic output for set time span
 Rdyn.base <- function(Parms,    # list of parms needed for SimpleBoxODE function
                       tstart,   # First time point (in seconds)
@@ -93,14 +101,13 @@ Rdyn.base <- function(Parms,    # list of parms needed for SimpleBoxODE function
   
   out
 }
-
 ```
 
 ## Calculation
 
 Calculate the output.
 
-```{r}
+``` r
 # calculate mass in each compartment for 2 time spans with different emission regimes 
 # period 1: 100% emission as input in sb4n.xlsx
 # period 2: 0% emissions as input in sb4n.xlsx
@@ -132,10 +139,9 @@ Mt <- rbind(Mt1,Mt2)
 colnames(Mt) <- c("Time",SB.names)
 
 write.xlsx(x=Mt, file = "data/SimpleBox_Dynamic_data.xlsx", sheetName = "dynamicR_data", colNames = TRUE,startRow=1,startCol = 1)
-
-
 ```
 
-The output is stored in *data/SimpleBox_Dynamic_data.xlsx*. The output is the fraction of steady state in a compartment at each time step.
-Please copy the output to the *dynamicR* sheet in the *`r paste(sb4n.loc)`* file.
-
+The output is stored in *data/SimpleBox\_Dynamic\_data.xlsx*. The output
+is the fraction of steady state in a compartment at each time step.
+Please copy the output to the *dynamicR* sheet in the
+*data/SimpleBox4.0\_web.xlsm* file.
