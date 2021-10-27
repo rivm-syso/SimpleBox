@@ -1,12 +1,16 @@
 # SimpleBox
-SimpleBox is a multimedia mass balance model of the so-called ‘Mackay type’. It simulates environmental fate of chemicals as fluxes (mass flows) between a series of well-mixed boxes of air, water, sediment and soil on regional, continental and global spatial scales.
 
-This repository if for files, e.g. in R to handle different functions of the model. First is an R script to better use the dynamic function of SimpleBox instead having to rely on RExcell.
+SimpleBox is a multimedia mass balance model of the so-called 'Mackay type'. It simulates environmental fate of chemicals as fluxes (mass flows) between a series of well-mixed boxes of air, water, sediment and soil on regional, continental and global spatial scales.
+
+This repository contains:
+
+|     |                                                               |                                                                                                                                                 |
+|-----|---------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1   | Dynamic Rshell for xl version of SimpleBox and SimpleBox4nano | [Dynamic_RShell.md](Dynamic_RShell.md)                                                                                                          |
+| 2   | Spreadsheet xl_version of SimpleBox                           | see branch [xl_version](https://github.com/rivm-syso/SimpleBox/tree/xl_version) and [releases](https://github.com/rivm-syso/SimpleBox/releases) |
+| 3   | Spreadsheet xl4nano_version of SimpleBox4nano                 | see branch and [releases](https://github.com/rivm-syso/SimpleBox/releases)                                                                      |
+| 4   | Different R vignettes illustrating methods using SimpleBox    | [Vignettes](vignettes/README.md)                                                                                                                |
 
 # Availability
-SimpleBox is available from [rivm.nl/SimpleBox](https://www.rivm.nl/en/soil-and-water/simplebox) or [rivm.nl/SimpleBox4nano](https://www.rivm.nl/en/soil-and-water/simplebox4nano)
-Scroll down for downlaod, the files are imedeately available after filling in the download form.
 
-# Dynamic analysis
-See R notebook: [Dynamic_SB4_Rnotebook.md](Dynamic_SB4_Rnotebook.md).
-And if you want to use 3 different emission periods in time, see [Dynamic_template.md](Dynamic_tempplate.md)
+SimpleBox4nano is available from [rivm.nl/SimpleBox4nano](https://www.rivm.nl/en/soil-and-water/simplebox4nano) Scroll down for downlaod, the files are imedeately available after filling in the download form.
