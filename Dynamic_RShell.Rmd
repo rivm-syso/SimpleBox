@@ -1,5 +1,5 @@
 ---
-title: "Quasi-dynamic (level IV) simplebox"
+title: "RShell for Quasi-dynamic (level IV) calculations using SimpleBox"
 author: "Joris Quik"
 date: "3/11/2021"
 output: github_document
