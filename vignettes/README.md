@@ -1,3 +1,3 @@
 # Vignettes
 
--   [Cummulative stock](Cummulative%20stock.md) calculations
+-   [Cummulative stock](Cummulative%20stock.Rmd) calculations
