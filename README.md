@@ -33,3 +33,7 @@ Required: [R](https://www.r-project.org/) and packages [deSolve](https://cran.r-
 See R notebook: [Dynamic_SB4_Rnotebook.md](Dynamic_SB4_Rnotebook.md). And if you want to use 3 different emission periods in time, see [Dynamic_template.md](Dynamic_tempplate.md)
 
 The RExcell method is depricated.
+
+## Citation
+
+...
