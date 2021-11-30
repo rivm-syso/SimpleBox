@@ -1,5 +1,7 @@
 # SimpleBox
 
+[![DOI](https://zenodo.org/badge/253434836.svg)](https://zenodo.org/badge/latestdoi/253434836)
+
 SimpleBox is a multimedia mass balance model of the so-called 'Mackay type'. It simulates environmental fate of chemicals as fluxes (mass flows) between a series of well-mixed boxes of air, water, sediment and soil on regional, continental and global spatial scales.
 
 This repository contains:
