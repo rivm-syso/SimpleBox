@@ -30,6 +30,10 @@ SimpleBox uses R-based numeric calculations to produce quasi-dynamic ('level IV'
 
 Required: [R](https://www.r-project.org/) and packages [deSolve](https://cran.r-project.org/package=deSolve) and [openxlsx](https://cran.r-project.org/package=openxlsx).
 
-See R notebook: [Dynamic_SB4_Rnotebook.md](Dynamic_SB4_Rnotebook.md). And if you want to use 3 different emission periods in time, see [Dynamic_template.md](Dynamic_tempplate.md)
+See R notebook: [Dynamic_SB4_Rnotebook.md](https://github.com/rivm-syso/SimpleBox/blob/master/Dynamic_RShell.md).
 
 The RExcell method is depricated.
+
+## Citation
+
+...
