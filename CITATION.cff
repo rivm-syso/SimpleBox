@@ -1,0 +1,18 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: SimpleBox
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - affiliation: RIVM
+identifiers:
+  - type: url
+    value: 'https://www.rivm.nl/SimpleBox'
+    description: RIVM information page on SimpleBox
+  - type: doi
+    value: 10.5281/zenodo.5743268
+    description: The doi for all versions (Concept of the work)
