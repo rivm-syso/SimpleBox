@@ -10,7 +10,7 @@ This repository contains:
 |-----|---------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
 | 1   | Dynamic Rshell for xl version of SimpleBox and SimpleBox4nano | [Dynamic_RShell.md](Dynamic_RShell.md)                                                                                                          |
 | 2   | Spreadsheet xl_version of SimpleBox                           | see branch [xl_version](https://github.com/rivm-syso/SimpleBox/tree/xl_version) and [releases](https://github.com/rivm-syso/SimpleBox/releases) |
-| 3   | Spreadsheet xl4plastic_version of SimpleBox4plastic                 | see branch and [releases](https://github.com/rivm-syso/SimpleBox/releases)                                                                      |
+| 3   | Spreadsheet xl4plastic_version of SimpleBox4plastic                 | see branch [xl4plastic_version](https://github.com/rivm-syso/SimpleBox/tree/xl4plastic_version) and [releases](https://github.com/rivm-syso/SimpleBox/releases)                                                                      |
 | 4   | Different R vignettes illustrating methods using SimpleBox    | [Vignettes](vignettes)                                                                                                                |
 
 # Availability
