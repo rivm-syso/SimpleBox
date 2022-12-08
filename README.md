@@ -2,6 +2,8 @@
 
 This repository provides the spreadsheet version of SimpleBox4plastic.
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7416252.svg)](https://doi.org/10.5281/zenodo.7416252)
+
 ## About
 
 SimpleBox4.0-plastic is a variant of the SimpleBox model, which is designed such that it simulates the specific environmental behaviour of nano- and micromaterials, plastics in particular. The model is based on SimpleBox4nano which added three particulate chemical species to the dissolved species already included in SimpleBox. SimpleBox4.0-plastic calculates mass flows of nano- and microplastics (NMP) by simultaneously solving mass balance equations for 4 different chemical species for each environmental compartment in the model.
