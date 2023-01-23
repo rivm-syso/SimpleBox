@@ -46,10 +46,19 @@ SB.K <- as.matrix(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="K")) # matrix
 SB.m0 <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="m0") # Initial mass of each compartment, could be "m0"
 SB.names <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="box_names") #Names for each compartment
 SB.v <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="v") #Volumes
-SB.e1 <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="emis.I") # Emission rates for first period
-SB.e2 <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="emis.II") # Emission rates for second period
-SB.tend1 <- as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="tend.I")) # Emission rates for second period
-SB.tend2 <- as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="tend.II")) # Emission rates for second period
+
+SB.e1 <- read.xlsx(sb4n.loc,sheet="dynamicR",colNames=FALSE, rows=15,cols=c(7:39)) # Emission rates for first period
+SB.e2 <- read.xlsx(sb4n.loc,sheet="dynamicR",colNames=FALSE, rows=16,cols=c(7:39))  # Emission rates for second period
+
+SB.tend1 <- as.numeric(read.xlsx(sb4n.loc,sheet="dynamicR",colNames=FALSE, rows=11,cols=6)) # Emission rates for second period
+SB.tend2 <- as.numeric(read.xlsx(sb4n.loc,sheet="dynamicR",colNames=FALSE, rows=11,cols=7)) # Emission rates for second period
+
+
+# Somehow these namedRegion's are not read in anymore (openxlsx bug?)
+# SB.e1 <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="emis.I") # Emission rates for first period
+# SB.e2 <- read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="emis.II") # Emission rates for second period
+# SB.tend1 <- as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="tend.I")) # Emission rates for second period
+# SB.tend2 <- as.numeric(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="tend.II")) # Emission rates for second period
 #ChemClass <- as.character(read.xlsx(sb4n.loc,colNames=FALSE, namedRegion ="ChemClass")) 
 colnames(SB.v) <- SB.names
 colnames(SB.e1) <- SB.names
@@ -131,8 +140,7 @@ Mt2 <- cbind(out.t2[,1]/(3600*24*365),t(t(out.t2[,2:(length(out.t2[1,]))])/invMi
 Mt <- rbind(Mt1,Mt2)
 colnames(Mt) <- c("Time",SB.names)
 
-write.xlsx(x=Mt, file = "data/SimpleBox_Dynamic_data.xlsx", sheetName = "dynamicR_data", colNames = TRUE,startRow=1,startCol = 1)
-
+write.xlsx(x=as.data.frame(Mt), file = "data/SimpleBox_Dynamic_data.xlsx", sheetName = "dynamicR_data", asTable=TRUE)
 
 ```
 
