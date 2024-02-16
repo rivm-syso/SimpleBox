@@ -10,8 +10,6 @@ SimpleBox4.0-nano is a variant of the SimpleBox model, which is designed such th
 
 [^readme-1]: The three particulate chemical species consist of: i) the emitted nanomaterial, ii) smaller heteroagglomerates (\<450 nm) consisting of nanomaterial and natural colloids or aerosols and iii) bigger heteroagglomerates (\>450 nm) consisting of nanomaterials and other particulates found in air, water and soil.
 
-[[1]](#_ftnref1) The three particulate chemical species consist of: i) the emitted nanomaterial, ii) smaller heteroagglomerates (\<450 nm) consisting of nanomaterial and natural colloids or aerosols and iii) bigger heteroagglomerates (\>450 nm) consisting of nanomaterials and other particulates found in air, water and soil.
-
 ## Method
 
 Documentation on the model definition that is added to simplebox to include the three particulate chemical species and make the model fit for nano has been published [[1](http://rivm.nl/en/Documents_and_publications/Scientific/Scientific_Articles/2014/april/Multimedia_Modeling_of_Engineered_Nanoparticles_with_SimpleBox4nano_Model_Definition_and_Evaluation)]. The main input parameters related to nanomaterial fate are the size and density of the nanomaterial, the size, density and concentration of natural particles and the transformation rates from emitted nanomaterial to the heteroagglomerate or dissolved species.
@@ -38,4 +36,4 @@ See R notebook: [Dynamic_SB4_Rnotebook.md](https://github.com/rivm-syso/SimpleBo
 
 RIVM, 2024. SimpleBox. <https://doi.org/10.5281/zenodo.5743268>
 
-Meesters, J.A.J., Koelmans, A.A., Quik, J.T.K., Hendriks, A.J., van de Meent, D., 2014. Multimedia Modeling of Engineered Nanoparticles with SimpleBox4nano: Model Definition and Evaluation. Environmental Science & Technology 48, 5726–5736. https://doi.org/10.1021/es500548h
+Meesters, J.A.J., Koelmans, A.A., Quik, J.T.K., Hendriks, A.J., van de Meent, D., 2014. Multimedia Modeling of Engineered Nanoparticles with SimpleBox4nano: Model Definition and Evaluation. Environmental Science & Technology 48, 5726--5736. <https://doi.org/10.1021/es500548h>
