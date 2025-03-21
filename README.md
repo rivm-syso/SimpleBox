@@ -1,6 +1,6 @@
 # SimpleBox4plastic xl_version
 
-This repository provides the spreadsheet version of SimpleBox4plastic.
+This repository provides the spreadsheet version of SimpleBox4plastic. This is now replaced by SimpleBox object oriented in R.
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7416252.svg)](https://doi.org/10.5281/zenodo.7416252)
 
@@ -9,7 +9,7 @@ This repository provides the spreadsheet version of SimpleBox4plastic.
 SimpleBox4.0-plastic is a variant of the SimpleBox model, which is designed such that it simulates the specific environmental behaviour of nano- and micromaterials, plastics in particular. The model is based on SimpleBox4nano which added three particulate chemical species to the dissolved species already included in SimpleBox. SimpleBox4.0-plastic calculates mass flows of nano- and microplastics (NMP) by simultaneously solving mass balance equations for 4 different chemical species for each environmental compartment in the model.
 
 ## Method
-SimpleBox4plastic is based on SimpleBox4nano (Quik et al. 2022, submitted). Further documentation on SimpleBox4nano is also available [here](http://rivm.nl/en/Documents_and_publications/Scientific/Scientific_Articles/2014/april/Multimedia_Modeling_of_Engineered_Nanoparticles_with_SimpleBox4nano_Model_Definition_and_Evaluation).
+SimpleBox4plastic is based on SimpleBox4nano (Quik et al. 2023). Further documentation on SimpleBox4nano is also available [here](https://doi.org/10.1021/es500548h)).
 
 ## Model code
 
@@ -35,4 +35,4 @@ The RExcell method is depricated.
 
 RIVM, 2022. SimpleBox. <https://doi.org/10.5281/zenodo.5743268>
 
-Quik, J.T.K., Meesters, J.A.J. and Koelmans, A.A., 2022. A Multimedia model for microplastic particles. Submitted. [pre-print?]
+Quik, J.T.K., Meesters, J.A.J. and Koelmans, A.A., 2023. A Multimedia model for microplastic particles. [link](https://doi.org/10.1016/j.scitotenv.2023.163437)
